@@ -1,6 +1,8 @@
 ---
 layout: post
 title:  "Primeiro Passo"
+author: Paulo Oliveira
+date: 2020-02-11
 ---
 
 # Primeiro Passo
