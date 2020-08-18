@@ -1,9 +1,9 @@
 ---
 layout:   post
 title:    "Cliente para Kafka (do zero) em .NET Core - parte 1"
-date:     2020-08-06 23:40
+date:     2020-08-18 12:40
 comments: true
-tags:     dotnet-core .net-core kafka protocol bedrock-framework
+tags:     dotnet-core kafka protocol bedrock-framework
 ---
 
 # Cliente para Kafka (do zero) em .NET Core - parte 1
@@ -13,19 +13,19 @@ Segundo a Wikpedia protocolo é descrito como:
 > _Na ciência da computação, um protocolo é uma convenção que controla e possibilita uma conexão, comunicação, transferência de dados entre dois sistemas computacionais.
 De maneira simples, um protocolo pode ser definido como "as regras que governam" a sintaxe, semântica e sincronização da comunicação. Os protocolos podem ser implementados pelo hardware, software ou por uma combinação dos dois._
 
-Faz alguns meses que tenho investido tempo em compreender melhor gerenciamento de memória e otimização com .NET Core, e depois de tanto tempo trabalhando com isso percebo que realmente deveria ter começado antes, antes cedo do nunca 🤷‍♂️.
+Faz alguns meses que tenho investido tempo em compreender melhor gerenciamento de memória e otimização com .NET Core, e depois de tanto tempo trabalhando com isso percebo que realmente deveria ter começado antes - antes tarde do nunca não é?! 🤷‍♂️.
 
-Nesse sentido estava a procura de um projeto em que pudesse desenvolver e testar essas capacidades do .NET, e a alguns meses conheci esse projeto criado pelo [David Fowler](https://twitter.com/davidfowl) chamado [Bedrock Framework](https://github.com/davidfowl/BedrockFramework), basicamente é um conjunto de APIs em .NET Core que pode ser usado para construção de protocolos de comunicação entre cliente e servidor, o projeto se basea em novas abstrações introduzidas no .NET Core 3 ([Microsoft.AspNetCore.Connections.Abstractions](https://www.nuget.org/packages/Microsoft.AspNetCore.Connections.Abstractions)). Então você pode criar seu próprio servidor que se comunica usando um protocolo customizado, utilizando a infraestrutura do [Kestrel](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel?view=aspnetcore-3.1) e [System.IO.Pipelines](https://devblogs.microsoft.com/dotnet/system-io-pipelines-high-performance-io-in-net/).
+Nesse sentido estava a procura de um projeto em que pudesse desenvolver e testar essas capacidades do .NET, e a alguns meses conheci um projeto criado pelo [David Fowler](https://twitter.com/davidfowl) chamado [Bedrock Framework](https://github.com/davidfowl/BedrockFramework), basicamente é um conjunto de APIs em .NET Core que pode ser usado para construção de protocolos de comunicação entre cliente e servidor, o projeto se basea em novas abstrações introduzidas no .NET Core 3 ([Microsoft.AspNetCore.Connections.Abstractions](https://www.nuget.org/packages/Microsoft.AspNetCore.Connections.Abstractions)). Então você pode criar seu próprio servidor que se comunica usando um protocolo customizado, utilizando a infraestrutura do [Kestrel](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel?view=aspnetcore-3.1) e [System.IO.Pipelines](https://devblogs.microsoft.com/dotnet/system-io-pipelines-high-performance-io-in-net/).
 
-Neste post, falarei pouco sobre o funcionamento do _Kafka_, não explicarei termos básicos, o foco é o que se relaciona a comunicação e a implementação em .NET, por isso posso citar termos que não terei explicado, mas podem ser facilmente encontrados.
+_Neste post, falarei pouco sobre o funcionamento do [Kafka](https://kafka.apache.org/), não explicarei termos básicos, o foco é o que se relaciona a comunicação e a implementação em .NET, por isso posso citar termos que não terei explicado, mas podem ser facilmente encontrados._
 
 ## Kafka
 
-Como o título deve deixar claro, o meu objetivo é criar do zero uma implementação do protocolo de comunicação com o [Apache Kafka](https://kafka.apache.org/), não tenho a ambição de cobrir todos os recursos, mas o mínimo para publicar mensagens e consumir mensagens.
+Como o título deve deixar claro, o meu objetivo é criar do zero uma implementação do protocolo de comunicação com o [Apache Kafka](https://kafka.apache.org/), não tenho a ambição de cobrir todos os recursos, mas o mínimo para publicar e consumir mensagens.
 
 > _Apache Kafka é uma plataforma distribuída de fluxo de eventos, é de código-aberto e usado por milhares de companhias para fluxos de alta performace de dados, fluxo de análises, integração de dados, e aplicações críticas. (https://kafka.apache.org) [minha tradução livre]_
 
-A [documentação](https://kafka.apache.org/protocol.html) é muito boa e traz nos detalhes como deve ser feita a comunicação e também é uma oportunidade de aprender mais profundamente comunicação via TCP em .NET e o desenho uma API (biblioteca/framework). Na Farfetch trabalhamos com Kafka como principal plataforma para comunicação assíncrona entre as aplicações, recentemente foi lançado o [primeiro projeto](https://github.com/Farfetch/kafka-flow) open-source da empresa que é um framework para comunicação com Kafka 🙄.
+A [documentação](https://kafka.apache.org/protocol.html) é muito boa e traz nos detalhes como deve ser feita a comunicação. Na Farfetch trabalhamos com Kafka como principal plataforma para comunicação assíncrona entre as aplicações, recentemente foi lançado o [primeiro projeto](https://github.com/Farfetch/kafka-flow) open-source da empresa que é um framework para comunicação com Kafka 🙄.
 
 ### Comunicação
 
@@ -37,7 +37,7 @@ Kafka, não mantém todos os dados em todos os nós do _cluster_, o tópico é c
 
 ### Protocolo
 
-Como disse anteriormente as mensagens tem um tamanho delimitado, ou seja, devemos saber exatamente o tamanho da mensagem antes de começar enviar os bytes, isso porque é com base no tamanho da mensagem que o servidor pode delimitar os campos que a mensagem contém. Os campos padrão para o envio de uma mensagem ao Kafka são os seguintes:
+Como disse anteriormente as mensagens tem um tamanho delimitado, ou seja, devemos saber exatamente o tamanho da mensagem antes de começar enviar os bytes, isso porque é com base no tamanho da mensagem que o servidor pode delimitar as mensagens recebidas pelo cliente, o mesmo vale quando o cliente está a analisar os dados recebidos do servidor. Os campos obrigatórios para o envio ou leitura de uma mensagem Kafka são os seguintes:
 
 #### Tamanho (requisições/respostas)
 
@@ -64,13 +64,13 @@ Como disse anteriormente as mensagens tem um tamanho delimitado, ou seja, devemo
 
 ## Projeto
 
-Ok, com essas informações acho que já podemos começar, e a primeira coisa a fazer é criar um projeto e definir onde-vai-ficar-o-que (😅). Tenho algumas dúvidas quanto ao design de uma biblioteca desse tipo e vou tentar esclarece-las nesse processo. Inicialmente penso em [_**KafkaRaw**_]() como um bom nome e não encontrei nada igual no _Nuget_, então será esse o nome do projeto. Também não desejo ter/manter compatilidade com versões mais antigas do .NET Core, tudo será baseado no 3.1.
+Ok, com essas informações acho que já podemos começar, e a primeira coisa a fazer é criar um projeto e definir "onde-vai-ficar-o-que" 😅. Tenho algumas dúvidas quanto ao design de uma biblioteca desse tipo e vou tentar esclarece-las nesse processo. Inicialmente penso em [KafkaRaw](https://github.com/pvoliveira/kafkaraw) como um bom nome e não encontrei nada igual no _Nuget_, então será esse o nome do projeto. Também não desejo ter/manter compatilidade com versões mais antigas do .NET Core, tudo será baseado no 3.1.
 
 ![screenshot da solução inicial](/assets/images/kafkaraw-solution.jpg)
 
-Baseado na estrutura básica de uma requisição procurei uma chamada da API que fosse simples e pudesse comprovar o funcionamento do projeto., por fim decidi utilizar a chamada para retornar as versões compatíveis da API pelo servidor [ApiVersions (ApiKey = 18)](https://kafka.apache.org/protocol#The_Messages_ApiVersions), basicamente só precisamos enviar no cabeçalho o _ApiKey_ da chamada e qual versão do método queremos usar, neste caso _*request_api_key*_ = 18 e _*request_api_version*_ = 0, o cabeçalho _*correlation_id*_ neste caso não tem muita importância pois apenas uma chamada será feita, e a vamos analisar imediatamente após a requisição ser feita.
+Baseado na estrutura básica de uma requisição procurei uma chamada da API que fosse simples e pudesse comprovar o funcionamento do projeto, por fim decidi utilizar a chamada para retornar as versões compatíveis da API pelo servidor [ApiVersions (ApiKey = 18)](https://kafka.apache.org/protocol#The_Messages_ApiVersions), basicamente só precisamos enviar no cabeçalho o _ApiKey_ da chamada e qual versão queremos usar, neste caso _*request_api_key*_ = 18 e _*request_api_version*_ = 0, o cabeçalho _*correlation_id*_ neste caso não tem muita importância pois apenas uma chamada será feita, e a vamos analisar a resposta imediatamente após a requisição.
 
-Criei um método simples para se conectar com os _brokers_ indicados no construtor da classe e outro para realizar a chamada em si:
+Criei um método simples para se conectar com os _brokers_ indicados no construtor da classe e outro para realizar a chamada em si, vamos dar uma olhada neles:
 
 ```csharp
 /// ...
@@ -120,10 +120,11 @@ public async Task<ApiVersionsResponse> GetApiVersions()
 /// ...
 ```
 
-Olhando primeiro para o método `ConnectAsync` onde fazemos a conexão com os hosts, podemos ver aqui o uso do `ClientBuilder` fornecido pelo _Bedrock Framework_, o _framework_ faz uso de uma "API fluente" para conseguirmos encadear métodos que configuram parâmetros ou comportamentos do _framework_. Nesse caso queremos nos conectar via TCP ao host, por isso o uso do método `UseSockets`, adicionalmente `UseConnectionLogging` gerá logs da comunicação, ao final o método `Build` vai retornar um cliente que contém em si uma instância para um `IConnectionFactory` (definido pelo método `UseSockets`) o qual abrirá uma conexão com o host e nos devolverá uma conexão pronta para comunicação com o host.
+No método `ConnectAsync` fazemos a conexão com os hosts, podemos ver aqui o uso do `ClientBuilder` fornecido pelo _Bedrock Framework_, o _framework_ faz uso de uma "API fluente" para encadear métodos que configuram parâmetros ou comportamentos do _framework_. Nesse caso queremos nos conectar via TCP ao host, por isso o uso do método `UseSockets`, adicionalmente `UseConnectionLogging` gerará logs da comunicação, ao final o método `Build` vai retornar um cliente que contém em si uma instância de `IConnectionFactory`, mais especificamente do tipo `SocketConnectionFactory` definido pelo método `UseSockets`, o qual abrirá uma conexão com o host e nos devolverá uma conexão pronta para comunicação. A conexão retornada pelo método `ConnectAsync` do _client_ é um `ConnectionContext` definido em `Microsoft.AspNetCore.Connections.Abstractions`, o _framework_ implementa "uma ligação" para a escrita/leitura utilizando `System.IO.Pipelines.Pipe` para otimizar a alocação de memória e performance.
 
-O `GetApiVersions` trata das chamada para realizar a escrita dos dados para a conexão e análise da resposta - sem grandes complexidades.
+O método `GetApiVersions` trata das chamadas para realizar a escrita dos dados para a conexão e análise da resposta - sem complexidades aqui.
 
+A classe `ApiVersions` é quem contém a lógica para escrita e leitura para da requisição e resposta, ou seja, a ordem em que devem ser escritos/lidos os bytes.
 
 ```csharp
 public class ApiVersions :
@@ -204,6 +205,36 @@ public class ApiVersions :
 }
 ```
 
+Com isso feito, é possível criar uma pequena aplicação console para por tudo a funcionar 🤞. Para testar, iniciei uma instância do Kafka usando _Docker_ a ouvir a porta padrão 9092.
+
+```csharp
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        var provider = new ServiceCollection()
+            .AddLogging(builder =>
+                builder
+                    .SetMinimumLevel(LogLevel.Debug)
+                    .AddConsole(opts => opts.DisableColors = false))
+            .AddKafkaRawClient("localhost:9092")
+            .BuildServiceProvider();
+
+        await provider.GetService<IKafkaRawClient>().ConnectAsync();
+
+        var r = await provider.GetService<IKafkaRawClient>().GetApiVersions();
+
+        string apis = JsonSerializer.Serialize(r, new JsonSerializerOptions { WriteIndented = true });
+
+        provider.GetService<ILogger<Program>>().LogDebug($"ApiVersions: {apis}");
+
+        Console.ReadKey();
+    }
+}
+```
+
+Abaixo temos a saída da execução da aplicação console:
+
 ```shell
 info: KafkaRaw.KafkaRawClient[0]
       Connected to [::1]:8662
@@ -243,3 +274,13 @@ dbug: KafkaClient.Program[0]
         ]
       }
 ```
+
+E funciona!!! 😁😁😁 o método da API do Kafka chamado retorna qual a versão mínima e máxima aceita pelo _broker_.
+
+## Conclusão
+
+A protocolo de comunicação com o Kafka é bem documentado e será fácil seguir implementando novos métodos, o próximo desafio será organizar o fluxo de comunicação: _healthchecks_, cache dos metadados do _cluster_, e definir quais recursos o [KafkaRaw](https://github.com/pvoliveira/kafkaraw) irá expor.
+
+Tentei ser mais direto possível para mostrar como você pode implementar um protocolo customizado de comunicação com .NET Core, por isso não tentei deixar as coisas no "melhor estado da arte", e muito menos tocar em performance, gerenciamento de memória e etc, mas espero após alguns posts chegar a isso. Para qualquer dúvida ou discussão, o projeto já está no _GitHub_, pode se abrir uma _issue_, deixar um comentário aqui no post ou falar diretamente comigo.
+
+Muito obrigado e até o próximo 😎
