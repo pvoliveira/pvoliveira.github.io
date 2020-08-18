@@ -8,7 +8,7 @@ tags:     dotnet-core kafka protocol bedrock-framework
 
 # Cliente para Kafka (do zero) em .NET Core - parte 1
 
-Segundo a Wikpedia protocolo é descrito como:
+Segundo a [Wikipedia](https://pt.wikipedia.org/wiki/Protocolo_(ci%C3%AAncia_da_computa%C3%A7%C3%A3o)) protocolo é descrito como:
 
 > _Na ciência da computação, um protocolo é uma convenção que controla e possibilita uma conexão, comunicação, transferência de dados entre dois sistemas computacionais.
 De maneira simples, um protocolo pode ser definido como "as regras que governam" a sintaxe, semântica e sincronização da comunicação. Os protocolos podem ser implementados pelo hardware, software ou por uma combinação dos dois._
@@ -174,7 +174,7 @@ public class ApiVersions :
     {
         var cltIdBytes = Encoding.UTF8.GetBytes(message.ClientId);
 
-        var size = 8 + 2 + cltIdBytes.Length;
+        var size = 14 + cltIdBytes.Length;
 
         // Size
         var sizeBuffer = output.GetSpan(4);
