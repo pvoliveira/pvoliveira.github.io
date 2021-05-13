@@ -1,11 +1,8 @@
 ---
-layout:   post
-title:    "Primeiro Passo"
-date:     "2020-07-31"
 comments: true
+date: "2020-07-31T00:00:00Z"
+title: Primeiro Passo
 ---
-
-# Primeiro Passo
 
 Olá, esse texto marca o início de um algo importante para mim e que sempre tive vontade fazer, mas por não ser bom com palavras e acho que um pouco inseguro também, preferi sempre adiar.
 

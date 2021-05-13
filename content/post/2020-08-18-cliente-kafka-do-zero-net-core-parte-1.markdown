@@ -1,12 +1,9 @@
 ---
-layout:   post
-title:    "Cliente para Kafka (do zero) em .NET Core - parte 1"
-date:     2020-08-18 12:40
 comments: true
-tags:     dotnet-core kafka protocol bedrock-framework
+date: "2020-08-18T00:00:00Z"
+tags: dotnet-core kafka protocol bedrock-framework
+title: Cliente para Kafka (do zero) em .NET Core - parte 1
 ---
-
-# Cliente para Kafka (do zero) em .NET Core - parte 1
 
 Segundo a [Wikipedia](https://pt.wikipedia.org/wiki/Protocolo_(ci%C3%AAncia_da_computa%C3%A7%C3%A3o)) protocolo é descrito como:
 
