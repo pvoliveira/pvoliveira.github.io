@@ -1,7 +1,8 @@
 ---
 comments: true
 date: "2020-08-18T00:00:00Z"
-tags: dotnet-core kafka protocol bedrock-framework
+categories: [dotnet-core,kafka,protocol,bedrock-framework]
+tags: [dotnet-core,kafka,protocol,bedrock-framework]
 title: Cliente para Kafka (do zero) em .NET Core - parte 1
 ---
 
