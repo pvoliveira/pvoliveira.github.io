@@ -1,15 +1,25 @@
-baseURL: https://blog.pauloliveira.dev/
-disablePathToLower: true
+
 languageCode: pt-BR
+aseURL: https://blog.pauloliveira.dev/
+disablePathToLower: true
 title: Paulo Oliveira
 theme: anubis
-disqusShortname: disqus_F6ZSYN9eM0
+disqusShortname: blogpauloliveira
+enableRobotsTXT: true
+
 params:
+  author: Paulo Oliveira
+  email: paulovt7@gmail.com
+  dateFormat: "2006-01-02"
   description: |
     Meu nome é Paulo Oliveira, e aqui é o lugar onde compartilho um pouco sobre desenvolvimento de software.
-Menus:
-  main:
-    - Name: "GitHub"
-      URL: "https://github.com/pvoliveira/"
-    - Name: "LinkedIn"
-      URL: "https://www.linkedin.com/in/paulovitorcorreadeoliveira/"
+
+  social:
+    - id: email
+      name: paulovt7@gmail.com
+    - id: github
+      name: pvoliveira
+    - id: linkedin
+      name: paulovitorcorreadeoliveira
+    - id: twitter
+      name: paulovcdo
