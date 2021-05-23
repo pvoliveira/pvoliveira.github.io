@@ -2,10 +2,9 @@ baseURL: https://blog.pauloliveira.dev/
 disablePathToLower: true
 languageCode: pt-BR
 title: Paulo Oliveira
-theme: hyde
+theme: anubis
 disqusShortname: disqus_F6ZSYN9eM0
 params:
-  layoutReverse: true
   description: |
     Meu nome é Paulo Oliveira, e aqui é o lugar onde compartilho um pouco sobre desenvolvimento de software.
 Menus:
