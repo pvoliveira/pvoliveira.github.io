@@ -1,2 +1,74 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>.net on Paulo Oliveira</title><link>https://blog.pauloliveira.dev/categories/.net/</link><description>Recent content in .net on Paulo Oliveira</description><generator>Hugo -- gohugo.io</generator><language>pt-BR</language><lastBuildDate>Thu, 20 May 2021 00:59:51 +0100</lastBuildDate><atom:link href="https://blog.pauloliveira.dev/categories/.net/index.xml" rel="self" type="application/rss+xml"/><item><title>Async/Await - Pequenas dicas ;)</title><link>https://blog.pauloliveira.dev/post/2021-05-17-async-await-dicas-que-aprendi/</link><pubDate>Thu, 20 May 2021 00:59:51 +0100</pubDate><guid>https://blog.pauloliveira.dev/post/2021-05-17-async-await-dicas-que-aprendi/</guid><description>Olá novamente, sei que passou muito tempo até chegarmos nesse novo post, tive contra-tempos, falta de vontade de continuar, e comecei a fazer algo que não fazia que era guardar em algum lugar o que aprendi para partilhar aqui. Enfim, vamos a isso 🤓
-Estive a fazer um curso sobre código assíncrono em .NET/C# Async Experts, e acho que tem conteúdo suficiente para render alguns posts, então comecei a fazer uma lista para partilhar aqui, agora vou deixar uma dica que você pode já saber ou talvez nunca tenha notado.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>.net on Paulo Oliveira</title><link>https://blog.pauloliveira.dev/categories/.net/</link><description>Paulo Oliveira (.net)</description><generator>Hugo -- gohugo.io</generator><language>pt-BR</language><lastBuildDate>Thu, 20 May 2021 00:59:51 +0100</lastBuildDate><atom:link href="https://blog.pauloliveira.dev/categories/.net/index.xml" rel="self" type="application/rss+xml"/><item><title>Async/Await - Pequenas dicas ;)</title><link>https://blog.pauloliveira.dev/post/2021-05-17-async-await-dicas-que-aprendi/</link><pubDate>Thu, 20 May 2021 00:59:51 +0100</pubDate><guid>https://blog.pauloliveira.dev/post/2021-05-17-async-await-dicas-que-aprendi/</guid><description>&lt;p>Olá novamente, sei que passou muito tempo até chegarmos nesse novo post, tive contra-tempos, falta de vontade de continuar, e comecei a fazer algo que não fazia que era guardar em algum lugar o que aprendi para partilhar aqui. Enfim, vamos a isso 🤓&lt;/p>
+&lt;p>Estive a fazer um curso sobre código assíncrono em .NET/C# &lt;a href="https://asyncexpert.com">Async Experts&lt;/a>, e acho que tem conteúdo suficiente para render alguns posts, então comecei a fazer uma lista para partilhar aqui, agora vou deixar uma dica que você pode já saber ou talvez nunca tenha notado.&lt;/p>
+&lt;h2 id="exceptions">Exceptions&lt;/h2>
+&lt;p>Observe o exemplo abaixo por um minuto e tente identificar se existe algo &amp;ldquo;mal&amp;rdquo;:&lt;/p>
+&lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-csharp" data-lang="csharp">&lt;span style="color:#66d9ef">public&lt;/span> &lt;span style="color:#66d9ef">async&lt;/span> Task&amp;lt;&lt;span style="color:#66d9ef">bool&lt;/span>&amp;gt; Method_A_Async(&lt;span style="color:#66d9ef">string&lt;/span> &lt;span style="color:#66d9ef">value&lt;/span>)
+{
+&lt;span style="color:#66d9ef">if&lt;/span> (&lt;span style="color:#66d9ef">string&lt;/span>.IsNullOrEmpty(&lt;span style="color:#66d9ef">value&lt;/span>))
+{
+&lt;span style="color:#66d9ef">throw&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> ArgumentException();
+}
+&lt;span style="color:#66d9ef">var&lt;/span> response = &lt;span style="color:#66d9ef">await&lt;/span> httpClient.GetAsync(&lt;span style="color:#66d9ef">value&lt;/span>);
+&lt;span style="color:#66d9ef">return&lt;/span> response != &lt;span style="color:#66d9ef">null&lt;/span>;
+}
+&lt;span style="color:#66d9ef">public&lt;/span> &lt;span style="color:#66d9ef">async&lt;/span> Task A_MethodA_Async()
+{
+&lt;span style="color:#66d9ef">var&lt;/span> x = &lt;span style="color:#66d9ef">await&lt;/span> Method_A_Async(&lt;span style="color:#e6db74">&amp;#34;x&amp;#34;&lt;/span>);
+}
+&lt;span style="color:#66d9ef">public&lt;/span> &lt;span style="color:#66d9ef">async&lt;/span> Task B_MethodA_Async()
+{
+&lt;span style="color:#66d9ef">var&lt;/span> x = &lt;span style="color:#66d9ef">await&lt;/span> Method_A_Async(&lt;span style="color:#e6db74">&amp;#34;&amp;#34;&lt;/span>);
+}
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>O código não tem nenhum problema, o método &lt;code>A_MethodA_Async&lt;/code> irá ser executado sem gerar exceções, enquanto o método &lt;code>B_MethodA_Async&lt;/code> lançará uma exceção do tipo &lt;code>ArgumentException&lt;/code>. Você pode já ter escrito métodos dessa forma e vão funcionar, mas se pensarmos em como métodos assíncronos são executados estamos a utilizar um pouco mal os recursos quando o método &lt;code>B_MethodA_Async&lt;/code> é executado.&lt;/p>
+&lt;p>Quando fazemos &lt;code>await&lt;/code> para computar o valor de uma &lt;code>Task&lt;/code> estamos a escalar a execução da &lt;code>Task&lt;/code> para o &lt;code>ThreadPool&lt;/code>, pois bem, no exemplo acima existem dois caminhos para nosso código executar: primeiro quando passar um valor que é vazio ou nulo, o segundo é quando passamos um valor válido e temos uma nova chama assíncrona. Isso significa que podemos (ou não) estar a utilizar mais de uma thread para processar código que poderia ser síncrono, vamos reescrever o código do método &lt;code>Method_A_Async&lt;/code>.&lt;/p>
+&lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-csharp" data-lang="csharp">&lt;span style="color:#66d9ef">public&lt;/span> Task&amp;lt;&lt;span style="color:#66d9ef">bool&lt;/span>&amp;gt; Method_B_Async(&lt;span style="color:#66d9ef">string&lt;/span> &lt;span style="color:#66d9ef">value&lt;/span>)
+{
+&lt;span style="color:#66d9ef">if&lt;/span> (&lt;span style="color:#66d9ef">string&lt;/span>.IsNullOrEmpty(&lt;span style="color:#66d9ef">value&lt;/span>))
+{
+&lt;span style="color:#66d9ef">throw&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> ArgumentException();
+}
+&lt;span style="color:#66d9ef">return&lt;/span> Method_B_InternalAsync(&lt;span style="color:#66d9ef">value&lt;/span>);
+}
+&lt;span style="color:#66d9ef">private&lt;/span> &lt;span style="color:#66d9ef">async&lt;/span> Task&amp;lt;&lt;span style="color:#66d9ef">bool&lt;/span>&amp;gt; Method_B_InternalAsync(&lt;span style="color:#66d9ef">string&lt;/span> &lt;span style="color:#66d9ef">value&lt;/span>)
+{
+&lt;span style="color:#66d9ef">var&lt;/span> response = &lt;span style="color:#66d9ef">await&lt;/span> httpClient.GetAsync(&lt;span style="color:#66d9ef">value&lt;/span>);
+&lt;span style="color:#66d9ef">return&lt;/span> response != &lt;span style="color:#66d9ef">null&lt;/span>;
+}
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Primeiro notem que removi o &lt;code>async&lt;/code> da assinatura do método, não estamos mais a utilizar o &lt;code>await&lt;/code> para nenhuma chamada, então isso torna &lt;code>Method_B_Async&lt;/code> um método síncrono. Também criei um novo método &lt;code>Method_B_InternalAsync&lt;/code> (usando &lt;code>async&lt;/code> na assinatura) que não tem mais as validações necessárias para os parâmetros (feitas no método &lt;code>Method_B_Async&lt;/code>), isso é chamado de &amp;ldquo;async eliding&amp;rdquo; e a tradução pode ficar um pouco estranha mas é algo como &lt;em>&amp;ldquo;suprimir/omitir o assíncrono&amp;rdquo;&lt;/em>.&lt;/p>
+&lt;p>Abaixo podemos ver melhor o que significa adicionar o &lt;code>async&lt;/code> na assinatura do método:&lt;/p>
+&lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-csharp" data-lang="csharp">&lt;span style="color:#a6e22e">[AsyncStateMachine(typeof(&amp;lt;Method_A_Async&amp;gt;d__1))]&lt;/span>
+&lt;span style="color:#a6e22e">[DebuggerStepThrough]&lt;/span>
+&lt;span style="color:#66d9ef">public&lt;/span> Task&amp;lt;&lt;span style="color:#66d9ef">bool&lt;/span>&amp;gt; Method_A_Async(&lt;span style="color:#66d9ef">string&lt;/span> &lt;span style="color:#66d9ef">value&lt;/span>)
+{
+&amp;lt;Method_A_Async&amp;gt;d__1 stateMachine = &lt;span style="color:#66d9ef">new&lt;/span> &amp;lt;Method_A_Async&amp;gt;d__1();
+stateMachine.&amp;lt;&amp;gt;t__builder = AsyncTaskMethodBuilder&amp;lt;&lt;span style="color:#66d9ef">bool&lt;/span>&amp;gt;.Create();
+stateMachine.&amp;lt;&amp;gt;&lt;span style="color:#ae81ff">4&lt;/span>__this = &lt;span style="color:#66d9ef">this&lt;/span>;
+stateMachine.&lt;span style="color:#66d9ef">value&lt;/span> = &lt;span style="color:#66d9ef">value&lt;/span>;
+stateMachine.&amp;lt;&amp;gt;&lt;span style="color:#ae81ff">1&lt;/span>__state = -&lt;span style="color:#ae81ff">1&lt;/span>;
+stateMachine.&amp;lt;&amp;gt;t__builder.Start(&lt;span style="color:#66d9ef">ref&lt;/span> stateMachine);
+&lt;span style="color:#66d9ef">return&lt;/span> stateMachine.&amp;lt;&amp;gt;t__builder.Task;
+}
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>E sem &lt;code>async&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-csharp" data-lang="csharp">&lt;span style="color:#66d9ef">public&lt;/span> Task&amp;lt;&lt;span style="color:#66d9ef">bool&lt;/span>&amp;gt; Method_B_Async(&lt;span style="color:#66d9ef">string&lt;/span> &lt;span style="color:#66d9ef">value&lt;/span>)
+{
+&lt;span style="color:#66d9ef">if&lt;/span> (&lt;span style="color:#66d9ef">string&lt;/span>.IsNullOrEmpty(&lt;span style="color:#66d9ef">value&lt;/span>))
+{
+&lt;span style="color:#66d9ef">throw&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> ArgumentException();
+}
+&lt;span style="color:#66d9ef">return&lt;/span> Method_B_InternalAsync(&lt;span style="color:#66d9ef">value&lt;/span>);
+}
+&lt;span style="color:#a6e22e">
+&lt;/span>&lt;span style="color:#a6e22e">[AsyncStateMachine(typeof(&amp;lt;Method_B_InternalAsync&amp;gt;d__2))]&lt;/span>
+&lt;span style="color:#a6e22e">[DebuggerStepThrough]&lt;/span>
+&lt;span style="color:#66d9ef">private&lt;/span> Task&amp;lt;&lt;span style="color:#66d9ef">bool&lt;/span>&amp;gt; Method_B_InternalAsync(&lt;span style="color:#66d9ef">string&lt;/span> &lt;span style="color:#66d9ef">value&lt;/span>)
+{
+&amp;lt;Method_B_InternalAsync&amp;gt;d__2 stateMachine = &lt;span style="color:#66d9ef">new&lt;/span> &amp;lt;Method_B_InternalAsync&amp;gt;d__2();
+stateMachine.&amp;lt;&amp;gt;t__builder = AsyncTaskMethodBuilder&amp;lt;&lt;span style="color:#66d9ef">bool&lt;/span>&amp;gt;.Create();
+stateMachine.&amp;lt;&amp;gt;&lt;span style="color:#ae81ff">4&lt;/span>__this = &lt;span style="color:#66d9ef">this&lt;/span>;
+stateMachine.&lt;span style="color:#66d9ef">value&lt;/span> = &lt;span style="color:#66d9ef">value&lt;/span>;
+stateMachine.&amp;lt;&amp;gt;&lt;span style="color:#ae81ff">1&lt;/span>__state = -&lt;span style="color:#ae81ff">1&lt;/span>;
+stateMachine.&amp;lt;&amp;gt;t__builder.Start(&lt;span style="color:#66d9ef">ref&lt;/span> stateMachine);
+&lt;span style="color:#66d9ef">return&lt;/span> stateMachine.&amp;lt;&amp;gt;t__builder.Task;
+}
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Um máquina de estados é criada para a execução do método assíncrono e a validação dos parâmetros será feito dentro dessa máquina de estados. Enquanto se utilizarmos a outra abordagem, conseguimos manter as validações que não dependem de métodos assíncronos fora do fluxo assíncrono de execução.&lt;/p>
+&lt;p>Pode parecer um detalhe mas evitar a máquina de estados (no nosso exemplo quando vamos parar a execução do método por causa de uma validação/exceção) além de poder melhorar o uso de mais threads na execução também evita a alocação de objetos para gerir o código assíncrono. São otimizações que em &lt;em>hot-paths&lt;/em> (trechos muito executados na aplicação) podem gerar ganhos positivos e performance 😉.&lt;/p></description></item></channel></rss>
